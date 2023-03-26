@@ -2,45 +2,40 @@
 
 # Install required packages
 apt-get update
-apt-get install -y curl nginx ufw gnupg2 openssh-server python3-venv
+apt-get install -y curl nginx python3 python3-pip python3-venv ufw openssh-server gnupg
 
-# Enable firewall
-ufw allow 'Nginx Full'
+# Configure firewall
+ufw default deny incoming
+ufw default allow outgoing
+ufw allow ssh
+ufw allow http
+ufw allow https
 ufw --force enable
 
-# Clone the code repository and install dependencies
-cd /var/www/
-git clone https://github.com/glenn-sorrentino/pgp-signup-form.git
-cd pgp-signup-form
+# Clone the code
+curl -sSL https://github.com/glenn-sorrentino/pgp-signup-form/archive/main.tar.gz | tar -xz
+cd pgp-signup-form-main
+
+# Import the PGP key
+gpg --import public_key.asc
+
+# Ask user to trust the key
+read -p "Do you want to trust the key used to demo this app? (y/n) " trust_key
+if [ "$trust_key" = "y" ]; then
+    # Set trust level to ultimate
+    echo "Setting ultimate trust for key"
+    echo "trust C11C21F89FD9B8610B3F3975AF5B672D287DB55C" | gpg --batch --yes --command-fd 0 --edit-key hello@glennsorrentino.com
+else
+    echo "Not setting ultimate trust for key"
+fi
+
+# Create and activate virtual environment
 python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
 
-# Import the PGP public key and trust it ultimately
-gpg --import /var/www/pgp-signup-form/public_key.asc
-echo -e "5\ny\n" | gpg --command-fd 0 --expert --edit-key hello@glennsorrentino.com
+# Install dependencies
+pip3 install -r requirements.txt
 
-# Configure Nginx
-rm /etc/nginx/sites-enabled/default
-cat > /etc/nginx/sites-enabled/pgp-signup-form <<EOF
-server {
-    listen 80;
-    server_name pgp-signup-form.com;
-
-    location / {
-        proxy_pass http://127.0.0.1:5000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
-EOF
-
-# Test Nginx configuration
-nginx -t
-
-# Start the Flask app
-cd /var/www/pgp-signup-form
+# Start the app
 export FLASK_APP=app.py
-flask run &
-
-echo "The PGP signup form is now running at http://pgp-signup-form.com"
+flask run --host=0.0.0.0
