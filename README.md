@@ -1,6 +1,6 @@
 # PGP Signup Form
 
-These instructions will guide you through setting up the Signup Flask app for production environment using the Gunicorn WSGI HTTP server and the Nginx reverse proxy server.
+These instructions will guide you through setting up the Signup Flask app for development environment using the Gunicorn WSGI HTTP server and the Nginx reverse proxy server.
 
 ![pgp](https://user-images.githubusercontent.com/28545431/227811875-693887e0-4e04-4b16-a21b-0fe811c417a9.png)
 
