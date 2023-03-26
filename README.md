@@ -4,7 +4,7 @@ These instructions will guide you through setting up the Signup Flask app in a d
 
 ![pgp](https://user-images.githubusercontent.com/28545431/227811875-693887e0-4e04-4b16-a21b-0fe811c417a9.png)
 
-## Install
+## Easy Install
 
 ```
 curl -sSL https://raw.githubusercontent.com/glenn-sorrentino/pgp-signup-form/master/install.sh | bash
