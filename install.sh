@@ -1,34 +1,38 @@
 #!/bin/bash
 
-# Install required packages
-apt update
-apt install -y nginx python3 python3-pip git ufw openssh-server
-
-# Install virtualenv
-pip3 install virtualenv
-
-# Clone the repository
-git clone https://github.com/glenn-sorrentino/pgp-signup-form.git
-
-# Create and activate virtualenv
-cd pgp-signup-form
-virtualenv venv
-source venv/bin/activate
-
 # Install dependencies
+sudo apt update
+sudo apt -y upgrade
+sudo apt -y install nginx python3-pip python3-venv git ufw openssh-server gnupg2
+
+# Clone repository
+if [ ! -d "pgp-signup-form" ]; then
+  git clone https://github.com/glenn-sorrentino/pgp-signup-form.git
+fi
+
+# Set up virtual environment and install dependencies
+cd pgp-signup-form
+python3 -m venv venv
+source venv/bin/activate
 pip3 install -r requirements.txt
 
-# Update nginx config
-sed -i 's/server_name example.com/server_name pgp-signup-form/g' /etc/nginx/sites-available/default
-ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/
+# Configure nginx
+sudo unlink /etc/nginx/sites-enabled/default
+sudo ln -s /etc/nginx/sites-available/pgp-signup-form /etc/nginx/sites-enabled/pgp-signup-form
+sudo sed -i 's|/path/to/pgp-signup-form|'"$(pwd)"'|g' /etc/nginx/sites-enabled/pgp-signup-form
+sudo sed -i 's|server_name example.com;|server_name localhost;|g' /etc/nginx/sites-enabled/pgp-signup-form
+sudo nginx -t
+sudo systemctl restart nginx
 
-# Restart nginx
-systemctl restart nginx
+# Configure firewall
+sudo ufw allow 'Nginx Full'
+sudo ufw allow 'OpenSSH'
+echo "y" | sudo ufw enable
 
-# Enable firewall
-ufw allow OpenSSH
-ufw allow 'Nginx Full'
-ufw enable
+# Import and trust PGP key
+gpg --import pgp-key.pub
+echo "5" | gpg --command-fd 0 --expert --edit-key hello@glennsorrentino.com trust
 
-# Run the app
-python3 app.py
+# Start the app
+export FLASK_APP=app.py
+flask run --host=0.0.0.0
