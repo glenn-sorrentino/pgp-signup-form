@@ -4,7 +4,7 @@
 apt-get update
 
 # Install dependencies
-apt-get install -y nginx python3-pip python3 git ufw
+apt-get install -y nginx python3-pip python3 git ufw openssh-server
 
 # Clone repository
 REPO_NAME="pgp-signup-form"
