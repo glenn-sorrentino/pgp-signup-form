@@ -19,28 +19,5 @@
     </form>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="{{ url_for('static', filename='main.js') }}"></script>
-    <script>
-    $(document).ready(function() {
-        $('form').on('submit', function(event) {
-            event.preventDefault();
-
-            var formData = $(this).serialize();
-
-            $.ajax({
-                type: 'POST',
-                url: '/signup',
-                data: formData,
-                dataType: 'json',
-                success: function(response) {
-                    alert(response.message);
-                },
-                error: function(error) {
-                    console.log(error);
-                }
-            });
-        });
-    });
-    </script>
-
 </body>
 </html>
