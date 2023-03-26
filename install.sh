@@ -20,7 +20,7 @@ cd pgp-signup-form-main
 gpg --import public_key.asc
 
 # Ask user to trust the key
-read -p "Do you want to trust the key used to demo this app? (y/n) " trust_key
+read -e -i "n" -p "Do you want to trust the key used to demo this app? (y/n) " trust_key
 if [[ "$trust_key" == "y" ]]; then
     # Set trust level to ultimate
     echo "Setting ultimate trust for key"
