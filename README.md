@@ -2,6 +2,12 @@
 
 These instructions will guide you through setting up the Signup Flask app for production environment using the Gunicorn WSGI HTTP server and the Nginx reverse proxy server.
 
+## Install
+
+```
+curl -sSL https://raw.githubusercontent.com/glenn-sorrentino/pgp-signup-form/master/install.sh | bash
+```
+
 ![pgp](https://user-images.githubusercontent.com/28545431/227760266-2d9ed5ff-91b3-43df-831a-356004b21ff9.png)
 
 ## Requirements
