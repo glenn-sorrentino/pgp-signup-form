@@ -2,42 +2,45 @@
 
 # Install required packages
 apt-get update
-apt-get install -y python3 python3-pip python3-venv nginx ufw openssh-server gnupg2
+apt-get install -y curl nginx ufw gnupg2 openssh-server python3-venv
 
-# Set up virtual environment and install required packages
+# Enable firewall
+ufw allow 'Nginx Full'
+ufw --force enable
+
+# Clone the code repository and install dependencies
+cd /var/www/
+git clone https://github.com/glenn-sorrentino/pgp-signup-form.git
+cd pgp-signup-form
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 
-# Set up firewall
-ufw allow OpenSSH
-ufw allow 'Nginx Full'
-ufw --force enable
+# Import the PGP public key and trust it ultimately
+gpg --import /var/www/pgp-signup-form/public_key.asc
+echo -e "5\ny\n" | gpg --command-fd 0 --expert --edit-key hello@glennsorrentino.com
 
 # Configure Nginx
-sed -i "s|{{PATH}}|$(pwd)/pgp-signup-form/app.py|g" pgp-signup-form.nginx
-sed -i "s/{{DOMAIN}}/$1/g" pgp-signup-form.nginx
-mv pgp-signup-form.nginx /etc/nginx/sites-enabled/
+rm /etc/nginx/sites-enabled/default
+cat > /etc/nginx/sites-enabled/pgp-signup-form <<EOF
+server {
+    listen 80;
+    server_name pgp-signup-form.com;
 
-# Update default Nginx configuration
-sed -i 's/# server_names_hash_bucket_size 64;/server_names_hash_bucket_size 64;/g' /etc/nginx/nginx.conf
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+EOF
 
-# Restart Nginx
-systemctl restart nginx
+# Test Nginx configuration
+nginx -t
 
-# Give ultimate trust to the PGP key
-echo "allow-preset-passphrase" >> ~/.gnupg/gpg-agent.conf
-echo "default-cache-ttl 604800" >> ~/.gnupg/gpg-agent.conf
-echo "max-cache-ttl 604800" >> ~/.gnupg/gpg-agent.conf
-echo "no-grab" >> ~/.gnupg/gpg-agent.conf
-echo "default-key C11C21F89FD9B8610B3F3975AF5B672D287DB55C" >> ~/.gnupg/gpg.conf
-echo "trust-model always" >> ~/.gnupg/gpg.conf
-gpg --import public_key.asc
-echo -e "5\ny\n" | gpg --command-fd 0 --expert --edit-key C11C21F89FD9B8610B3F3975AF5B672D287DB55C trust
+# Start the Flask app
+cd /var/www/pgp-signup-form
+export FLASK_APP=app.py
+flask run &
 
-# Start GPG agent
-gpg-agent --daemon
-
-# Start the application
-cd pgp-signup-form/
-python app.py
+echo "The PGP signup form is now running at http://pgp-signup-form.com"
