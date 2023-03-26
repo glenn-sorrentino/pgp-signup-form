@@ -21,7 +21,7 @@ gpg --import public_key.asc
 
 # Ask user to trust the key
 read -p "Do you want to trust the key used to demo this app? (y/n) " trust_key
-if [ "$trust_key" = "y" ]; then
+if [ "$trust_key" == "y" ]; then
     # Set trust level to ultimate
     echo "Setting ultimate trust for key"
     echo "trust C11C21F89FD9B8610B3F3975AF5B672D287DB55C" | gpg --batch --yes --command-fd 0 --edit-key hello@glennsorrentino.com
