@@ -14,7 +14,7 @@ ufw --force enable
 
 # Clone the code
 curl -sSL https://github.com/glenn-sorrentino/pgp-signup-form/archive/main.tar.gz | tar -xz
-cd pgp-signup-form-main
+cd pgp-signup-form
 
 # Import the PGP key
 gpg --import public_key.asc
