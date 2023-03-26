@@ -1,38 +1,43 @@
 #!/bin/bash
 
-# Install dependencies
-sudo apt update
-sudo apt -y upgrade
-sudo apt -y install nginx python3-pip python3-venv git ufw openssh-server gnupg2
+# Install required packages
+apt-get update
+apt-get install -y python3 python3-pip python3-venv nginx ufw openssh-server gnupg2
 
-# Clone repository
-if [ ! -d "pgp-signup-form" ]; then
-  git clone https://github.com/glenn-sorrentino/pgp-signup-form.git
-fi
-
-# Set up virtual environment and install dependencies
-cd pgp-signup-form
+# Set up virtual environment and install required packages
 python3 -m venv venv
 source venv/bin/activate
-pip3 install -r requirements.txt
+pip install -r requirements.txt
 
-# Configure nginx
-sudo unlink /etc/nginx/sites-enabled/default
-sudo ln -s /etc/nginx/sites-available/pgp-signup-form /etc/nginx/sites-enabled/pgp-signup-form
-sudo sed -i 's|/path/to/pgp-signup-form|'"$(pwd)"'|g' /etc/nginx/sites-enabled/pgp-signup-form
-sudo sed -i 's|server_name example.com;|server_name localhost;|g' /etc/nginx/sites-enabled/pgp-signup-form
-sudo nginx -t
-sudo systemctl restart nginx
+# Set up firewall
+ufw allow OpenSSH
+ufw allow 'Nginx Full'
+ufw --force enable
 
-# Configure firewall
-sudo ufw allow 'Nginx Full'
-sudo ufw allow 'OpenSSH'
-echo "y" | sudo ufw enable
+# Configure Nginx
+sed -i "s|{{PATH}}|$(pwd)/pgp-signup-form/app.py|g" pgp-signup-form.nginx
+sed -i "s/{{DOMAIN}}/$1/g" pgp-signup-form.nginx
+mv pgp-signup-form.nginx /etc/nginx/sites-enabled/
 
-# Import and trust PGP key
-gpg --import pgp-key.pub
-echo "5" | gpg --command-fd 0 --expert --edit-key hello@glennsorrentino.com trust
+# Update default Nginx configuration
+sed -i 's/# server_names_hash_bucket_size 64;/server_names_hash_bucket_size 64;/g' /etc/nginx/nginx.conf
 
-# Start the app
-export FLASK_APP=app.py
-flask run --host=0.0.0.0
+# Restart Nginx
+systemctl restart nginx
+
+# Give ultimate trust to the PGP key
+echo "allow-preset-passphrase" >> ~/.gnupg/gpg-agent.conf
+echo "default-cache-ttl 604800" >> ~/.gnupg/gpg-agent.conf
+echo "max-cache-ttl 604800" >> ~/.gnupg/gpg-agent.conf
+echo "no-grab" >> ~/.gnupg/gpg-agent.conf
+echo "default-key C11C21F89FD9B8610B3F3975AF5B672D287DB55C" >> ~/.gnupg/gpg.conf
+echo "trust-model always" >> ~/.gnupg/gpg.conf
+gpg --import public_key.asc
+echo -e "5\ny\n" | gpg --command-fd 0 --expert --edit-key C11C21F89FD9B8610B3F3975AF5B672D287DB55C trust
+
+# Start GPG agent
+gpg-agent --daemon
+
+# Start the application
+cd pgp-signup-form/
+python app.py
