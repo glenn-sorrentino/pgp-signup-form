@@ -1,31 +1,34 @@
 #!/bin/bash
 
-# Update package list
-apt-get update
+# Install required packages
+apt update
+apt install -y nginx python3 python3-pip git ufw openssh-server
+
+# Install virtualenv
+pip3 install virtualenv
+
+# Clone the repository
+git clone https://github.com/glenn-sorrentino/pgp-signup-form.git
+
+# Create and activate virtualenv
+cd pgp-signup-form
+virtualenv venv
+source venv/bin/activate
 
 # Install dependencies
-apt-get install -y nginx python3-pip python3 git ufw openssh-server
-
-# Clone repository
-REPO_NAME="pgp-signup-form"
-mkdir $REPO_NAME
-git clone https://github.com/glenn-sorrentino/$REPO_NAME.git $REPO_NAME
-
-# Create virtual environment and install dependencies
-cd $REPO_NAME
-python3 -m venv venv
-source venv/bin/activate
 pip3 install -r requirements.txt
 
-# Configure Nginx
-cp nginx_config /etc/nginx/sites-available/$REPO_NAME
-ln -s /etc/nginx/sites-available/$REPO_NAME /etc/nginx/sites-enabled/$REPO_NAME
-sed -i 's/server_name example.com;/server_name localhost;/g' /etc/nginx/sites-available/$REPO_NAME
+# Update nginx config
+sed -i 's/server_name example.com/server_name pgp-signup-form/g' /etc/nginx/sites-available/default
+ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/
 
-# Start Nginx
+# Restart nginx
 systemctl restart nginx
 
-# Configure firewall
+# Enable firewall
+ufw allow OpenSSH
 ufw allow 'Nginx Full'
-ufw allow 'OpenSSH'
 ufw enable
+
+# Run the app
+python3 app.py
