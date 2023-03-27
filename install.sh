@@ -1,35 +1,45 @@
 #!/bin/bash
 
-# Install required packages
-apt-get update
-apt-get install -y curl nginx python3 python3-pip python3-venv ufw openssh-server gnupg
+# Update packages and install dependencies
+sudo apt update
+sudo apt install -y gnupg nginx openssh-server python3 python3-venv python3-pip ufw curl
 
-# Configure firewall
-ufw default deny incoming
-ufw default allow outgoing
-ufw allow ssh
-ufw allow http
-ufw allow https
-ufw --force enable
+# Enable firewall
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow ssh
+sudo ufw allow http
+sudo ufw allow https
+sudo ufw --force enable
 
-# Clone the code
-curl -sSL https://github.com/glenn-sorrentino/pgp-signup-form/archive/main.tar.gz | tar -xz
-cd pgp-signup-form
+# Import public key
+curl -sSL https://raw.githubusercontent.com/glenn-sorrentino/pgp-signup-form/master/public_key.asc | gpg --import
 
-# Import the PGP key
-gpg --import public_key.asc
-
-# Set trust level to ultimate
+# Set ultimate trust for public key
 echo "Setting ultimate trust for key"
-echo "trust C11C21F89FD9B8610B3F3975AF5B672D287DB55C" | gpg --batch --yes --command-fd 0 --edit-key hello@glennsorrentino.com
+echo -e "5\ny\n" | gpg --command-fd 0 --edit-key "hello@glennsorrentino.com" trust
 
-# Create and activate virtual environment
+# Clone repository and set up Flask app
+git clone https://github.com/glenn-sorrentino/pgp-signup-form.git
+cd pgp-signup-form
 python3 -m venv venv
 source venv/bin/activate
-
-# Install dependencies
 pip3 install -r requirements.txt
 
-# Start the app
-export FLASK_APP=app.py
-flask run --host=0.0.0.0
+# Run Flask app with Nginx
+sudo tee /etc/nginx/sites-available/pgp-signup-form <<EOF
+server {
+    listen 80 default_server;
+    server_name _;
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    }
+}
+EOF
+sudo ln -s /etc/nginx/sites-available/pgp-signup-form /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+python3 app.py
