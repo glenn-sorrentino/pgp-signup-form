@@ -1,3 +1,15 @@
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  src: url("fonts/sans/AtkinsonHyperlegible-Regular.woff") format("woff"),
+       url("fonts/sans/AtkinsonHyperlegible-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Playfair";
+  src: url("fonts/serif/PlayfairDisplay-Medium.woff") format("woff"),
+       url("fonts/serif/PlayfairDisplay-Medium.woff2") format("woff2");
+}
+
 html {
   box-sizing: border-box;
 }
@@ -26,7 +38,7 @@ h1 {
 	font-size: 3rem;
 	line-height: 1.1;
 	margin: 0;
-	font-family: 'Playfair Display', serif;
+	font-family: 'Playfair', serif;
 
 }
 
