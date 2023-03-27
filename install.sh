@@ -21,7 +21,7 @@ gpg --import public_key.asc
 
 # Set trust level to ultimate
 echo "Setting ultimate trust for key"
-echo "trust 7B437253F81116E1B1DBFF69D5F9B36A5DC2CAF0" | gpg --batch --yes --command-fd 0 --edit-key demo@scidsg.org
+echo "trust C11C21F89FD9B8610B3F3975AF5B672D287DB55C" | gpg --batch --yes --command-fd 0 --edit-key hello@glennsorrentino.com
 
 # Create and activate virtual environment
 python3 -m venv venv
