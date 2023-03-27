@@ -16,7 +16,7 @@ with open(public_key_file, "r") as key_data:
     gpg.import_keys(key_data.read())
 
 # The email address associated with the public key
-recipient = "hello@glennsorrentino.com"
+recipient = "demo@scidsg.org"
 
 @app.route('/')
 def index():
